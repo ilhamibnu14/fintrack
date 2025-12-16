@@ -28,7 +28,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
   void _handleExportPdf() async {
     if (_currentTransactions.isEmpty) {
-      if (!mounted) return; // Cek mounted
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tidak ada data untuk diekspor.')),
       );
@@ -46,14 +46,12 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
     try {
       await _pdfExportService.generateAndSharePdf(_currentTransactions);
     } catch (e) {
-      // --- PERBAIKAN ASYNC GAP (Error 3) ---
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal mengekspor PDF: $e')),
         );
       }
     } finally {
-      // Cek mounted sebelum setState di blok finally
       if (mounted) {
         setState(() => _isExporting = false);
       }
@@ -302,8 +300,13 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                           Expanded(
                                             child: Text(
                                               trx.note,
-                                              style: const TextStyle(
-                                                  color: Colors.black87),
+                                              // --- PERBAIKAN WARNA DI SINI ---
+                                              style: TextStyle(
+                                                color: Theme.of(context).brightness == Brightness.dark
+                                                    ? Colors.white70 // Warna putih transparan untuk mode gelap
+                                                    : Colors.black87, // Warna hitam untuk mode terang
+                                              ),
+                                              // -------------------------------
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
                                             ),
@@ -326,9 +329,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                             : kIncomeColor,
                                       ),
                                     ),
-                                    // --- PERBAIKAN ICON (Error 1 & 2) ---
                                     PopupMenuButton<String>(
-                                      // Ganti LucideIcons.moreVertical jadi LucideIcons.ellipsisVertical
                                       icon: const Icon(LucideIcons.ellipsisVertical,
                                           size: 20, color: Colors.grey),
                                       onSelected: (value) {
