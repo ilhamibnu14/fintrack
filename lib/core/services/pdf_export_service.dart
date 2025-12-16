@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:share_plus/share_plus.dart'; // Import ini sudah benar
+import 'package:share_plus/share_plus.dart';
 
 class PdfExportService {
   // Format mata uang
@@ -16,11 +16,11 @@ class PdfExportService {
   Future<void> generateAndSharePdf(List<TransactionModel> transactions) async {
     final pdf = pw.Document();
 
-    // ... (logika list income/expense dan total tetap sama)
     final incomeList =
         transactions.where((trx) => trx.type == 'income').toList();
     final expenseList =
         transactions.where((trx) => trx.type == 'expense').toList();
+    
     final double totalIncome =
         incomeList.fold(0, (sum, item) => sum + item.amount);
     final double totalExpense =
@@ -46,20 +46,18 @@ class PdfExportService {
       ),
     );
 
+    // Mendapatkan direktori temporary (Inilah yang tadi error MissingPluginException)
     final output = await getTemporaryDirectory();
     final file = File("${output.path}/laporan_fintrack.pdf");
     await file.writeAsBytes(await pdf.save());
 
-    // --- PERBAIKAN FINAL API SHARE_PLUS ---
-    // Ganti 'SharePlus' menjadi 'Share'
+    // Membagikan file PDF
     await Share.shareXFiles(
-      [XFile(file.path)], // Argumen posisional
-      text: 'Berikut adalah laporan transaksi FinTrack Anda.', // Argumen named
+      [XFile(file.path)],
+      text: 'Berikut adalah laporan transaksi FinTrack Anda.',
     );
-    // ---------------------------------
   }
 
-  // ... (Fungsi _buildHeader dan _buildSummary tetap sama)
   pw.Widget _buildHeader() {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -108,7 +106,6 @@ class PdfExportService {
     );
   }
 
-  // ... (Fungsi _buildTransactionTable tetap sama)
   pw.Widget _buildTransactionTable(
       String title, List<TransactionModel> transactions, PdfColor color) {
     final List<List<String>> tableData = transactions.map((trx) {
