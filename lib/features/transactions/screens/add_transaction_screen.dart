@@ -47,6 +47,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   void initState() {
     super.initState();
     _selectedCategory = _expenseCategories.first;
+    // Format awal
     _dateController.text = DateFormat('dd MMMM yyyy').format(_selectedDate);
   }
 
@@ -65,11 +66,27 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
-    if (picked != null && picked != _selectedDate) {
+    
+    if (picked != null) {
+      // --- PERBAIKAN BUG WAKTU 00:00 ---
+      // Ambil waktu sekarang (Jam, Menit, Detik)
+      final now = DateTime.now();
+      
+      // Gabungkan Tanggal yang dipilih (picked) dengan Waktu Sekarang (now)
+      final DateTime combinedDateTime = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        now.hour,
+        now.minute,
+        now.second,
+      );
+
       setState(() {
-        _selectedDate = picked;
+        _selectedDate = combinedDateTime;
         _dateController.text = DateFormat('dd MMMM yyyy').format(_selectedDate);
       });
+      // ----------------------------------
     }
   }
 
@@ -105,14 +122,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       }
       final double amount = double.parse(_amountController.text);
       final String note = _noteController.text;
+      
       TransactionModel newTransaction = TransactionModel(
         type: _selectedType,
         amount: amount,
         category: _selectedCategory!,
         note: note,
-        date: _selectedDate,
+        date: _selectedDate, // Ini sekarang sudah mengandung jam yang benar
         imageUrl: imageUrl,
       );
+      
       try {
         await _firestoreService.addTransaction(newTransaction);
         if (mounted) {
@@ -140,9 +159,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Tambah Transaksi Baru"),
-        // --- PERBAIKAN DI SINI ---
         foregroundColor: Colors.white,
-        // -------------------------
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -171,7 +188,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
-  // ... (Sisa kode sama)
   Widget _buildImagePicker() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

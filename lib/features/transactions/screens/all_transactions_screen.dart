@@ -1,4 +1,4 @@
-// lib/features/transactions/all_transactions_screen.dart
+// lib/features/transactions/screens/all_transactions_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fintrack/app/utils/constants.dart';
@@ -27,7 +27,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   bool _isExporting = false;
 
   void _handleExportPdf() async {
-    // ... (fungsi ini sama persis)
     if (_currentTransactions.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tidak ada data untuk diekspor.')),
@@ -51,7 +50,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
   Future<void> _showDeleteConfirmation(
       BuildContext context, String docId) async {
-    // ... (fungsi ini sama persis)
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -86,7 +84,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   }
   
   Future<void> _showImageDialog(BuildContext context, String imageUrl) async {
-    // ... (fungsi ini sama persis)
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -129,7 +126,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
   }
 
   String _formatDateHeader(DateTime date) {
-    // ... (fungsi ini sama persis)
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = DateTime(now.year, now.month, now.day - 1);
@@ -146,8 +142,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // --- PERBAIKAN: HAPUS SCAFFOLD & APPBAR ---
-    // Widget terluar sekarang adalah SafeArea
     return SafeArea(
       child: StreamBuilder<QuerySnapshot<TransactionModel>>(
         stream: _firestoreService.getTransactionsStream(),
@@ -185,7 +179,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
               groupedTransactions.entries.toList()
                 ..sort((a, b) => b.key.compareTo(a.key));
 
-          // --- PERBAIKAN: Gunakan Column untuk menambah Judul & Tombol Ekspor ---
           return Column(
             children: [
               Padding(
@@ -218,7 +211,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                   ],
                 ),
               ),
-              // Gunakan Expanded agar ListView mengisi sisa ruang
               Expanded(
                 child: ListView.builder(
                   itemCount: sortedGroups.length,
@@ -262,10 +254,45 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                       : LucideIcons.arrowDown,
                                   color: isExpense ? kExpenseColor : kIncomeColor,
                                 ),
-                                title: Text(trx.category),
-                                subtitle: Text(trx.note.isNotEmpty
-                                    ? trx.note
-                                    : 'Tidak ada catatan'),
+                                title: Text(
+                                  trx.category,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Icon(LucideIcons.clock, 
+                                            size: 14, 
+                                            color: Colors.grey[600]),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          DateFormat('HH:mm').format(trx.date),
+                                          style: TextStyle(
+                                            fontSize: 12, 
+                                            color: Colors.grey[600],
+                                            fontWeight: FontWeight.w500
+                                          ),
+                                        ),
+                                        if (trx.note.isNotEmpty) ...[
+                                          const SizedBox(width: 8),
+                                          const Text("|", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              trx.note,
+                                              style: const TextStyle(color: Colors.black87),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ]
+                                      ],
+                                    ),
+                                  ],
+                                ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -273,6 +300,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                       "${isExpense ? '-' : '+'} ${_currencyFormat.format(trx.amount)}",
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
+                                        fontSize: 13,
                                         color: isExpense
                                             ? kExpenseColor
                                             : kIncomeColor,
@@ -280,15 +308,17 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                     ),
                                     if (hasImage)
                                       IconButton(
-                                        icon: Icon(LucideIcons.image,
+                                        icon: const Icon(LucideIcons.image,
                                             size: 18, color: Colors.blueAccent),
                                         onPressed: () {
                                           _showImageDialog(
                                               context, trx.imageUrl!);
                                         },
+                                        constraints: const BoxConstraints(), 
+                                        padding: const EdgeInsets.all(8),
                                       ),
                                     IconButton(
-                                      icon: Icon(LucideIcons.pencil,
+                                      icon: const Icon(LucideIcons.pencil,
                                           size: 18, color: Colors.grey),
                                       onPressed: () {
                                         Navigator.push(
@@ -300,13 +330,17 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                           ),
                                         );
                                       },
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(8),
                                     ),
                                     IconButton(
-                                      icon: Icon(LucideIcons.trash,
+                                      icon: const Icon(LucideIcons.trash,
                                           size: 18, color: kExpenseColor),
                                       onPressed: () {
                                         _showDeleteConfirmation(context, trx.id!);
                                       },
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(8),
                                     ),
                                   ],
                                 ),
@@ -321,7 +355,6 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
               ),
             ],
           );
-          // --- AKHIR PERBAIKAN ---
         },
       ),
     );
