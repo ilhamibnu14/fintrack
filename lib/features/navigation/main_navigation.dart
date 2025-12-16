@@ -17,13 +17,11 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  // --- KEMBALIKAN KE 3 HALAMAN ---
   static final List<Widget> _widgetOptions = <Widget>[
-    const DashboardScreen(),       // Index 0
-    const AllTransactionsScreen(), // Index 1
-    const ProfileScreen(),       // Index 2
+    const DashboardScreen(),       // Index 0 (Home)
+    const AllTransactionsScreen(), // Index 1 (Laporan)
+    const ProfileScreen(),         // Index 2 (Profile)
   ];
-  // ------------------------------
 
   void _onItemTapped(int index) {
     setState(() {
@@ -41,26 +39,25 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // BUKAN LAGI resizeToAvoidBottomInset: false
-      
-      // Body sekarang mengambil halaman dari list
       body: Center(
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       
-      // --- PERBAIKAN LOKASI FAB ---
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddTransaction,
-        backgroundColor: kAccentColor,
-        foregroundColor: Colors.white,
-        child: const Icon(LucideIcons.plus),
-      ),
-      // Gunakan 'centerFloat' agar mengambang di atas navbar
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      // ----------------------------
+      // --- PERBAIKAN DI SINI ---
+      // Jika _selectedIndex adalah 2 (halaman Profile), tombol menjadi null (hilang).
+      // Jika bukan 2 (Home atau Laporan), tombol ditampilkan.
+      floatingActionButton: _selectedIndex == 2 
+          ? null 
+          : FloatingActionButton(
+              onPressed: _navigateToAddTransaction,
+              backgroundColor: kAccentColor,
+              foregroundColor: Colors.white,
+              child: const Icon(LucideIcons.plus),
+            ),
+      // -------------------------
 
-      // --- PERBAIKAN BOTTOMNAVBAR ---
-      // Gunakan BottomNavigationBar standar, BUKAN BottomAppBar
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -69,7 +66,7 @@ class _MainNavigationState extends State<MainNavigation> {
           ),
           BottomNavigationBarItem(
             icon: Icon(LucideIcons.list),
-            label: 'Laporan', // Label "Laporan" sekarang aman
+            label: 'Laporan',
           ),
           BottomNavigationBarItem(
             icon: Icon(LucideIcons.user),
@@ -78,13 +75,11 @@ class _MainNavigationState extends State<MainNavigation> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        // Style ini akan mengambil warna dari tema Anda
         selectedItemColor:
             Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
         unselectedItemColor:
             Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
       ),
-      // -------------------------------
     );
   }
 }

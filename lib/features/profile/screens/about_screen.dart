@@ -47,7 +47,7 @@ class AboutScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  "Ilham", // Anda bisa ganti dengan nama lengkap Anda
+                  "Ilham Ibnu Qalbi. Yk dan Agam Nelzon Ramadhan", // Anda bisa ganti dengan nama lengkap Anda
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
