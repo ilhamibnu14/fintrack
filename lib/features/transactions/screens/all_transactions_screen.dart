@@ -28,23 +28,35 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
 
   void _handleExportPdf() async {
     if (_currentTransactions.isEmpty) {
+      if (!mounted) return; // Cek mounted
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tidak ada data untuk diekspor.')),
       );
       return;
     }
+
     setState(() => _isExporting = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Mempersiapkan PDF...')),
-    );
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mempersiapkan PDF...')),
+      );
+    }
+
     try {
       await _pdfExportService.generateAndSharePdf(_currentTransactions);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengekspor PDF: $e')),
-      );
+      // --- PERBAIKAN ASYNC GAP (Error 3) ---
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengekspor PDF: $e')),
+        );
+      }
     } finally {
-      setState(() => _isExporting = false);
+      // Cek mounted sebelum setState di blok finally
+      if (mounted) {
+        setState(() => _isExporting = false);
+      }
     }
   }
 
@@ -82,7 +94,7 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
       },
     );
   }
-  
+
   Future<void> _showImageDialog(BuildContext context, String imageUrl) async {
     return showDialog<void>(
       context: context,
@@ -204,7 +216,8 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                       )
                     else
                       IconButton(
-                        icon: Icon(LucideIcons.share, color: Theme.of(context).colorScheme.primary),
+                        icon: Icon(LucideIcons.share,
+                            color: Theme.of(context).colorScheme.primary),
                         onPressed: _handleExportPdf,
                         tooltip: 'Ekspor ke PDF',
                       ),
@@ -241,22 +254,27 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                           itemBuilder: (context, subIndex) {
                             final trx = aTransactionsInGroup[subIndex];
                             bool isExpense = trx.type == 'expense';
-                            bool hasImage =
-                                trx.imageUrl != null && trx.imageUrl!.isNotEmpty;
+                            bool hasImage = trx.imageUrl != null &&
+                                trx.imageUrl!.isNotEmpty;
 
                             return Card(
                               margin: const EdgeInsets.symmetric(
                                   horizontal: 12.0, vertical: 4.0),
                               child: ListTile(
+                                contentPadding: const EdgeInsets.only(
+                                    left: 16, right: 8),
                                 leading: Icon(
                                   isExpense
                                       ? LucideIcons.arrowUp
                                       : LucideIcons.arrowDown,
-                                  color: isExpense ? kExpenseColor : kIncomeColor,
+                                  color:
+                                      isExpense ? kExpenseColor : kIncomeColor,
                                 ),
                                 title: Text(
                                   trx.category,
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,26 +282,28 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                     const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        Icon(LucideIcons.clock, 
-                                            size: 14, 
-                                            color: Colors.grey[600]),
+                                        Icon(LucideIcons.clock,
+                                            size: 14, color: Colors.grey[600]),
                                         const SizedBox(width: 4),
                                         Text(
                                           DateFormat('HH:mm').format(trx.date),
                                           style: TextStyle(
-                                            fontSize: 12, 
-                                            color: Colors.grey[600],
-                                            fontWeight: FontWeight.w500
-                                          ),
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                              fontWeight: FontWeight.w500),
                                         ),
                                         if (trx.note.isNotEmpty) ...[
                                           const SizedBox(width: 8),
-                                          const Text("|", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                                          const Text("|",
+                                              style: TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 10)),
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
                                               trx.note,
-                                              style: const TextStyle(color: Colors.black87),
+                                              style: const TextStyle(
+                                                  color: Colors.black87),
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
                                             ),
@@ -306,41 +326,70 @@ class _AllTransactionsScreenState extends State<AllTransactionsScreen> {
                                             : kIncomeColor,
                                       ),
                                     ),
-                                    if (hasImage)
-                                      IconButton(
-                                        icon: const Icon(LucideIcons.image,
-                                            size: 18, color: Colors.blueAccent),
-                                        onPressed: () {
+                                    // --- PERBAIKAN ICON (Error 1 & 2) ---
+                                    PopupMenuButton<String>(
+                                      // Ganti LucideIcons.moreVertical jadi LucideIcons.ellipsisVertical
+                                      icon: const Icon(LucideIcons.ellipsisVertical,
+                                          size: 20, color: Colors.grey),
+                                      onSelected: (value) {
+                                        if (value == 'edit') {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  EditTransactionScreen(
+                                                      transaction: trx),
+                                            ),
+                                          );
+                                        } else if (value == 'delete') {
+                                          _showDeleteConfirmation(
+                                              context, trx.id!);
+                                        } else if (value == 'image') {
                                           _showImageDialog(
                                               context, trx.imageUrl!);
-                                        },
-                                        constraints: const BoxConstraints(), 
-                                        padding: const EdgeInsets.all(8),
-                                      ),
-                                    IconButton(
-                                      icon: const Icon(LucideIcons.pencil,
-                                          size: 18, color: Colors.grey),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                EditTransactionScreen(
-                                                    transaction: trx),
+                                        }
+                                      },
+                                      itemBuilder: (BuildContext context) {
+                                        return [
+                                          if (hasImage)
+                                            const PopupMenuItem(
+                                              value: 'image',
+                                              child: Row(
+                                                children: [
+                                                  Icon(LucideIcons.image,
+                                                      size: 18,
+                                                      color: Colors.blueAccent),
+                                                  SizedBox(width: 8),
+                                                  Text('Lihat Bukti'),
+                                                ],
+                                              ),
+                                            ),
+                                          const PopupMenuItem(
+                                            value: 'edit',
+                                            child: Row(
+                                              children: [
+                                                Icon(LucideIcons.pencil,
+                                                    size: 18,
+                                                    color: Colors.grey),
+                                                SizedBox(width: 8),
+                                                Text('Edit'),
+                                              ],
+                                            ),
                                           ),
-                                        );
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(LucideIcons.trash,
+                                                    size: 18,
+                                                    color: kExpenseColor),
+                                                SizedBox(width: 8),
+                                                Text('Hapus'),
+                                              ],
+                                            ),
+                                          ),
+                                        ];
                                       },
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(8),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(LucideIcons.trash,
-                                          size: 18, color: kExpenseColor),
-                                      onPressed: () {
-                                        _showDeleteConfirmation(context, trx.id!);
-                                      },
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(8),
                                     ),
                                   ],
                                 ),
