@@ -47,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
               _buildProfileMenuItem(
                 context,
                 icon: LucideIcons.settings,
-                title: 'Pengaturan Akun',
+
                 onTap: () {
                   Navigator.push(
                     context,
